@@ -50,8 +50,8 @@ def save_state(state):
     )
 
     def is_mint_safe(token_address):
-       try:
-        result = rpc_call("getAccountInfo", [
+         try:
+            result = rpc_call("getAccountInfo", [
             token_address,
             {"encoding": "jsonParsed"}
         ])
@@ -72,7 +72,7 @@ def save_state(state):
 
         return True
 
-    except Exception:
+     except Exception:
         return False
 
 
@@ -96,9 +96,9 @@ def is_holder_distribution_safe(token_address, max_percent=30):
 
         return True
 
-    except Exception:
+       except Exception:
         return False
-    url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
+    
     requests.post(url, json={
         "chat_id": TG_CHAT_ID,
         "text": text,
