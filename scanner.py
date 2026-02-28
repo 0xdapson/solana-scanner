@@ -37,9 +37,20 @@ def save_state(state):
     with open(STATE_FILE, "w") as f:
         json.dump(state, f)
 
-def tg_send(text):
+    def tg_send(text):
+    url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
+    requests.post(
+        url,
+        json={
+            "chat_id": TG_CHAT_ID,
+            "text": text,
+            "disable_web_page_preview": True
+        },
+        timeout=20
+    )
+
     def is_mint_safe(token_address):
-    try:
+       try:
         result = rpc_call("getAccountInfo", [
             token_address,
             {"encoding": "jsonParsed"}
@@ -206,4 +217,4 @@ if not is_holder_distribution_safe(t):
     save_state(state)
 
 if __name__ == "__main__":
-    main
+    main()
