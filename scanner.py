@@ -1,6 +1,20 @@
 import os, json, time
 import requests
+RPC_URL = os.getenv("RPC_URL")
 
+def rpc_call(method, params):
+    r = requests.post(
+        RPC_URL,
+        json={
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": method,
+            "params": params
+        },
+        timeout=20
+    )
+    r.raise_for_status()
+    return r.json()["result"]
 TG_TOKEN = os.environ["TG_TOKEN"]
 TG_CHAT_ID = os.environ["TG_CHAT_ID"]
 
@@ -24,6 +38,55 @@ def save_state(state):
         json.dump(state, f)
 
 def tg_send(text):
+    def is_mint_safe(token_address):
+    try:
+        result = rpc_call("getAccountInfo", [
+            token_address,
+            {"encoding": "jsonParsed"}
+        ])
+
+        if not result or not result.get("value"):
+            return False
+
+        info = result["value"]["data"]["parsed"]["info"]
+
+        mint_authority = info.get("mintAuthority")
+        freeze_authority = info.get("freezeAuthority")
+
+        if mint_authority is not None:
+            return False
+
+        if freeze_authority is not None:
+            return False
+
+        return True
+
+    except Exception:
+        return False
+
+
+def is_holder_distribution_safe(token_address, max_percent=30):
+    try:
+        result = rpc_call("getTokenLargestAccounts", [token_address])
+
+        if not result:
+            return False
+
+        accounts = result.get("value", [])
+        total_supply_data = rpc_call("getTokenSupply", [token_address])
+        total_supply = int(total_supply_data["value"]["amount"])
+
+        for acc in accounts:
+            amount = int(acc["amount"])
+            percent = (amount / total_supply) * 100
+
+            if percent > max_percent:
+                return False
+
+        return True
+
+    except Exception:
+        return False
     url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
     requests.post(url, json={
         "chat_id": TG_CHAT_ID,
@@ -131,6 +194,11 @@ def main():
                 continue
 
             seen_pairs.add(pair_addr)
+            if not is_mint_safe(t):
+    continue
+
+if not is_holder_distribution_safe(t):
+    continue
             tg_send(fmt_alert(p))
 
     state["seen_pairs"] = list(seen_pairs)[-2000:]
@@ -138,4 +206,4 @@ def main():
     save_state(state)
 
 if __name__ == "__main__":
-    main()
+    main
