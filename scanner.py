@@ -38,7 +38,7 @@ def save_state(state):
         json.dump(state, f)
 
     def tg_send(text):
-    url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
+        url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
     requests.post(
         url,
         json={
